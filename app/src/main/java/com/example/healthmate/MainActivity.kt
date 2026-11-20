@@ -1,6 +1,5 @@
 package com.example.healthmate
 
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,23 +12,40 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import com.example.healthmate.ui.theme.HealthMateTheme
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val viewModel =
+            ViewModelProvider(this)[HealthMateViewModel::class.java]
 
         setContent {
             HealthMateTheme {
@@ -37,7 +53,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color(0xFFF5F7FA)
                 ) {
-                    HealthMateDashboard()
+                    HealthMateDashboard(viewModel)
                 }
             }
         }
@@ -45,11 +61,29 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun HealthMateDashboard() {
+fun HealthMateDashboard(viewModel: HealthMateViewModel) {
+
+    val records by viewModel.records.collectAsState()
+
+    var showAddRecordForm by remember {
+        mutableStateOf(false)
+    }
+
+    val today = LocalDate.now().toString()
+
+    val todayRecords = records.filter {
+        it.date == today
+    }
+
+    val totalSteps = todayRecords.sumOf { it.steps }
+    val totalCalories = todayRecords.sumOf { it.calories }
+    val totalWater = todayRecords.sumOf { it.water }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F7FA))
+            .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
 
@@ -83,16 +117,17 @@ fun HealthMateDashboard() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
             HealthCard(
                 title = "Steps",
-                value = "0",
+                value = totalSteps.toString(),
                 unit = "steps",
                 modifier = Modifier.weight(1f)
             )
 
             HealthCard(
                 title = "Calories",
-                value = "0",
+                value = totalCalories.toString(),
                 unit = "kcal",
                 modifier = Modifier.weight(1f)
             )
@@ -102,12 +137,22 @@ fun HealthMateDashboard() {
 
         HealthCard(
             title = "Water Intake",
-            value = "0",
+            value = totalWater.toString(),
             unit = "ml today",
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(28.dp))
+
+        Button(
+            onClick = { showAddRecordForm = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("Add Health Record")
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = "Daily Health Goals",
@@ -136,6 +181,17 @@ fun HealthMateDashboard() {
             title = "Calorie Tracking",
             description = "Monitor your daily activity"
         )
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+
+    if (showAddRecordForm) {
+        AddHealthRecordDialog(
+            viewModel = viewModel,
+            onDismiss = {
+                showAddRecordForm = false
+            }
+        )
     }
 }
 
@@ -146,6 +202,7 @@ fun HealthCard(
     unit: String,
     modifier: Modifier = Modifier
 ) {
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -156,9 +213,11 @@ fun HealthCard(
             defaultElevation = 3.dp
         )
     ) {
+
         Column(
             modifier = Modifier.padding(18.dp)
         ) {
+
             Text(
                 text = title,
                 fontSize = 16.sp,
@@ -191,6 +250,7 @@ fun GoalCard(
     title: String,
     description: String
 ) {
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -201,9 +261,11 @@ fun GoalCard(
             defaultElevation = 2.dp
         )
     ) {
+
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+
             Text(
                 text = title,
                 fontSize = 16.sp,
@@ -222,10 +284,174 @@ fun GoalCard(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun HealthMateDashboardPreview() {
-    HealthMateTheme {
-        HealthMateDashboard()
+fun AddHealthRecordDialog(
+    viewModel: HealthMateViewModel,
+    onDismiss: () -> Unit
+) {
+
+    var date by remember {
+        mutableStateOf(LocalDate.now().toString())
     }
+
+    var steps by remember {
+        mutableStateOf("")
+    }
+
+    var calories by remember {
+        mutableStateOf("")
+    }
+
+    var water by remember {
+        mutableStateOf("")
+    }
+
+    var errorMessage by remember {
+        mutableStateOf("")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+
+        title = {
+            Text("Add Health Record")
+        },
+
+        text = {
+            Column {
+
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = {
+                        date = it
+                        errorMessage = ""
+                    },
+                    label = {
+                        Text("Date (YYYY-MM-DD)")
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = steps,
+                    onValueChange = {
+                        steps = it
+                    },
+                    label = {
+                        Text("Steps")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = calories,
+                    onValueChange = {
+                        calories = it
+                    },
+                    label = {
+                        Text("Calories")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = water,
+                    onValueChange = {
+                        water = it
+                    },
+                    label = {
+                        Text("Water (ml)")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (errorMessage.isNotBlank()) {
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text = errorMessage,
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        },
+
+        confirmButton = {
+            Button(
+                onClick = {
+
+                    val stepValue = steps.toIntOrNull()
+                    val calorieValue = calories.toIntOrNull()
+                    val waterValue = water.toIntOrNull()
+
+                    val validDate = try {
+                        LocalDate.parse(date)
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
+
+                    if (!validDate) {
+
+                        errorMessage =
+                            "Please enter a valid date (YYYY-MM-DD)."
+
+                    } else if (
+                        stepValue == null ||
+                        calorieValue == null ||
+                        waterValue == null
+                    ) {
+
+                        errorMessage =
+                            "Please enter valid numbers in all fields."
+
+                    } else if (
+                        stepValue < 0 ||
+                        calorieValue < 0 ||
+                        waterValue < 0
+                    ) {
+
+                        errorMessage =
+                            "Values cannot be negative."
+
+                    } else {
+
+                        viewModel.addRecord(
+                            HealthRecord(
+                                date = date,
+                                steps = stepValue,
+                                calories = calorieValue,
+                                water = waterValue
+                            )
+                        )
+
+                        onDismiss()
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+
+        dismissButton = {
+            Button(
+                onClick = onDismiss
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }
