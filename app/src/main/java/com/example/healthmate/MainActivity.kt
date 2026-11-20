@@ -69,6 +69,10 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
         mutableStateOf(false)
     }
 
+    var recordToDelete by remember {
+        mutableStateOf<HealthRecord?>(null)
+    }
+
     val today = LocalDate.now().toString()
 
     val todayRecords = records.filter {
@@ -182,14 +186,127 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
             description = "Monitor your daily activity"
         )
 
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text(
+            text = "Health Records History",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF222222)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (records.isEmpty()) {
+
+            Text(
+                text = "No health records available.",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+
+        } else {
+
+            records.forEach { record ->
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+
+                        Text(
+                            text = record.date,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF176B5B)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text("Steps: ${record.steps}")
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text("Calories: ${record.calories} kcal")
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text("Water: ${record.water} ml")
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                recordToDelete = record
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Delete Record")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
         Spacer(modifier = Modifier.height(20.dp))
     }
 
     if (showAddRecordForm) {
+
         AddHealthRecordDialog(
             viewModel = viewModel,
             onDismiss = {
                 showAddRecordForm = false
+            }
+        )
+    }
+
+    if (recordToDelete != null) {
+
+        AlertDialog(
+            onDismissRequest = {
+                recordToDelete = null
+            },
+            title = {
+                Text("Delete Health Record")
+            },
+            text = {
+                Text("Are you sure you want to delete this health record?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+
+                        recordToDelete?.let {
+                            viewModel.deleteRecord(it)
+                        }
+
+                        recordToDelete = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        recordToDelete = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
             }
         )
     }
@@ -400,7 +517,7 @@ fun AddHealthRecordDialog(
                     val validDate = try {
                         LocalDate.parse(date)
                         true
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         false
                     }
 
