@@ -39,6 +39,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.healthmate.ui.theme.HealthMateTheme
 import java.time.LocalDate
 import androidx.compose.material3.DatePicker
+import androidx.compose.ui.Alignment
 
 class MainActivity : ComponentActivity() {
 
@@ -50,19 +51,53 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HealthMateTheme {
+
+                var currentScreen by remember {
+                    mutableStateOf("login")
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color(0xFFF5F7FA)
                 ) {
-                    HealthMateDashboard(viewModel)
+
+                    when (currentScreen) {
+
+                        "login" -> LoginScreen(
+                            onLogin = {
+                                currentScreen = "dashboard"
+                            },
+                            onRegister = {
+                                currentScreen = "register"
+                            }
+                        )
+
+                        "register" -> RegisterScreen(
+                            onRegister = {
+                                currentScreen = "login"
+                            },
+                            onBackToLogin = {
+                                currentScreen = "login"
+                            }
+                        )
+
+                        "dashboard" -> HealthMateDashboard(
+                            viewModel = viewModel,
+                            onLogout = {
+                                currentScreen = "login"
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 @Composable
-fun HealthMateDashboard(viewModel: HealthMateViewModel) {
+fun HealthMateDashboard(
+    viewModel: HealthMateViewModel,
+    onLogout: () -> Unit
+) {
 
     val records by viewModel.records.collectAsState()
 
@@ -95,13 +130,30 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
             .padding(20.dp)
     ) {
 
-        Text(
-            text = "HealthMate",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF176B5B)
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "HealthMate",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF176B5B)
+                )
 
+                Button(
+                    onClick = {
+                        onLogout()
+                    }
+                ) {
+                    Text("Logout")
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
