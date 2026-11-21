@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.example.healthmate.ui.theme.HealthMateTheme
 import java.time.LocalDate
+import androidx.compose.material3.DatePicker
 
 class MainActivity : ComponentActivity() {
 
@@ -70,6 +71,9 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
     }
 
     var recordToDelete by remember {
+        mutableStateOf<HealthRecord?>(null)
+    }
+    var recordToEdit by remember {
         mutableStateOf<HealthRecord?>(null)
     }
 
@@ -197,6 +201,18 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        var selectedDate by remember { mutableStateOf("") }
+
+        OutlinedTextField(
+            value = selectedDate,
+            onValueChange = { selectedDate = it },
+            label = { Text("Search by date (YYYY-MM-DD)") },
+            placeholder = { Text("2026-11-21") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         if (records.isEmpty()) {
 
             Text(
@@ -207,7 +223,9 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
 
         } else {
 
-            records.forEach { record ->
+            records.filter{ record ->
+                selectedDate.isBlank() || record.date.contains(selectedDate)
+            }.forEach { record ->
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -245,13 +263,28 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Button(
-                            onClick = {
-                                recordToDelete = record
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Delete Record")
+
+                            Button(
+                                onClick = {
+                                    recordToEdit = record
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Edit")
+                            }
+
+                            Button(
+                                onClick = {
+                                    recordToDelete = record
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Delete")
+                            }
                         }
                     }
                 }
@@ -307,6 +340,15 @@ fun HealthMateDashboard(viewModel: HealthMateViewModel) {
                 ) {
                     Text("Cancel")
                 }
+            }
+        )
+    }
+    if (recordToEdit != null) {
+        EditHealthRecordDialog(
+            record = recordToEdit!!,
+            viewModel = viewModel,
+            onDismiss = {
+                recordToEdit = null
             }
         )
     }
@@ -567,6 +609,116 @@ fun AddHealthRecordDialog(
             Button(
                 onClick = onDismiss
             ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditHealthRecordDialog(
+    record: HealthRecord,
+    viewModel: HealthMateViewModel,
+    onDismiss: () -> Unit
+) {
+    var date by remember { mutableStateOf(record.date) }
+    var steps by remember { mutableStateOf(record.steps.toString()) }
+    var calories by remember { mutableStateOf(record.calories.toString()) }
+    var water by remember { mutableStateOf(record.water.toString()) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Health Record") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Date (YYYY-MM-DD)") }
+                )
+
+                OutlinedTextField(
+                    value = steps,
+                    onValueChange = { steps = it },
+                    label = { Text("Steps") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    )
+                )
+
+                OutlinedTextField(
+                    value = calories,
+                    onValueChange = { calories = it },
+                    label = { Text("Calories") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    )
+                )
+
+                OutlinedTextField(
+                    value = water,
+                    onValueChange = { water = it },
+                    label = { Text("Water (ml)") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    )
+                )
+
+                if (errorMessage.isNotBlank()) {
+                    Text(
+                        text = errorMessage,
+                        color = Color.Red
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val stepValue = steps.toIntOrNull()
+                    val calorieValue = calories.toIntOrNull()
+                    val waterValue = water.toIntOrNull()
+
+                    val validDate = try {
+                        LocalDate.parse(date)
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
+
+                    if (!validDate) {
+                        errorMessage = "Invalid date."
+                    } else if (
+                        stepValue == null ||
+                        calorieValue == null ||
+                        waterValue == null
+                    ) {
+                        errorMessage = "Enter valid numbers."
+                    } else if (
+                        stepValue < 0 ||
+                        calorieValue < 0 ||
+                        waterValue < 0
+                    ) {
+                        errorMessage = "Values cannot be negative."
+                    } else {
+                        viewModel.updateRecord(
+                            record.copy(
+                                date = date,
+                                steps = stepValue,
+                                calories = calorieValue,
+                                water = waterValue
+                            )
+                        )
+                        onDismiss()
+                    }
+                }
+            ) {
+                Text("Update")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
                 Text("Cancel")
             }
         }
