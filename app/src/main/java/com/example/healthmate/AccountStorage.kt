@@ -43,4 +43,13 @@ class AccountStorage(context: Context) {
 
         return preferences.contains("${normalizedEmail}_password")
     }
+
+    fun getName(email: String): String {
+        val normalizedEmail = email.trim().lowercase()
+
+        return preferences.getString(
+            "${normalizedEmail}_name",
+            "HealthMate User"
+        ) ?: "HealthMate User"
+    }
 }

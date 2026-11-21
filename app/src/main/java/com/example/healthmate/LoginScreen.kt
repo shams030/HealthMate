@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit,
+    onLogin: (String) -> Unit,
     onRegister: () -> Unit
 ) {
     val context = LocalContext.current
@@ -110,7 +110,7 @@ fun LoginScreen(
 
                     else -> {
                         errorMessage = ""
-                        onLogin()
+                        onLogin(email)
                     }
                 }
             },
