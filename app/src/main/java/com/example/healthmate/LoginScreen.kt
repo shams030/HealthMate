@@ -33,7 +33,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -43,14 +43,14 @@ fun LoginScreen(
             text = "HealthMate",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF34D399)
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Login to your account",
-            color = Color(0xFFCBD5E1)
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -66,13 +66,13 @@ fun LoginScreen(
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFF0D9488),
-                unfocusedBorderColor = Color(0xFF475569),
-                focusedLabelColor = Color(0xFF34D399),
-                unfocusedLabelColor = Color(0xFF94A3B8),
-                cursorColor = Color(0xFF34D399)
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                cursorColor = MaterialTheme.colorScheme.primary
             )
         )
 
@@ -90,13 +90,13 @@ fun LoginScreen(
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFF0D9488),
-                unfocusedBorderColor = Color(0xFF475569),
-                focusedLabelColor = Color(0xFF34D399),
-                unfocusedLabelColor = Color(0xFF94A3B8),
-                cursorColor = Color(0xFF34D399)
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                cursorColor = MaterialTheme.colorScheme.primary
             )
         )
 
@@ -105,7 +105,7 @@ fun LoginScreen(
 
             Text(
                 text = errorMessage,
-                color = Color(0xFFF87171)
+                color = MaterialTheme.colorScheme.error
             )
         }
 
@@ -137,12 +137,12 @@ fun LoginScreen(
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF0D9488)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text(
                 text = "Login",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -156,11 +156,11 @@ fun LoginScreen(
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Color(0xFF34D399)
+                contentColor = MaterialTheme.colorScheme.primary
             ),
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
-                Color(0xFF0D9488)
+                MaterialTheme.colorScheme.primary
             )
         ) {
             Text(

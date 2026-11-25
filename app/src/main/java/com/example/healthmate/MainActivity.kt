@@ -47,6 +47,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.SideEffect
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.text.style.TextAlign
 
 
 class MainActivity : ComponentActivity() {
@@ -151,6 +152,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     @Composable
     fun HealthMateDashboard(
         viewModel: HealthMateViewModel,
@@ -158,8 +160,7 @@ class MainActivity : ComponentActivity() {
         onProfileClick: () -> Unit,
         isDarkTheme: Boolean,
         onThemeChange: (Boolean) -> Unit
-    ){
-
+    ) {
         val records by viewModel.records.collectAsState()
 
         var showAddRecordForm by remember {
@@ -169,8 +170,13 @@ class MainActivity : ComponentActivity() {
         var recordToDelete by remember {
             mutableStateOf<HealthRecord?>(null)
         }
+
         var recordToEdit by remember {
             mutableStateOf<HealthRecord?>(null)
+        }
+
+        var selectedDate by remember {
+            mutableStateOf("")
         }
 
         val today = LocalDate.now().toString()
@@ -192,90 +198,85 @@ class MainActivity : ComponentActivity() {
                 .padding(20.dp)
         ) {
 
-
-            Column(
-                modifier = Modifier.fillMaxWidth()
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "HealthMate",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF8FAFC)
-                        )
+                Column {
+                    Text(
+                        text = "HealthMate",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
 
-                        Text(
-                            text = "Stay healthy, stay happy!",
-                            fontSize = 13.sp,
-                            color = Color(0xFF94A3B8)
-                        )
-                    }
-
-                    Button(
-                        onClick = onLogout,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFDC2626)
-                        )
-                    ) {
-                        Text("Logout", color = Color.White)
-                    }
+                    Text(
+                        text = "Stay healthy, stay happy!",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
                 Button(
-                    onClick = {
-                        onThemeChange(!isDarkTheme)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onLogout,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDarkTheme) {
-                            Color(0xFF334155)
-                        } else {
-                            Color(0xFF4B5F91)
-                        }
+                        containerColor = Color(0xFFDC2626)
                     )
                 ) {
-                    Text(
-                        text = if (isDarkTheme) {
-                            "☀ Switch to Light Mode"
-                        } else {
-                            "🌙 Switch to Dark Mode"
-                        },
-                        color = Color.White
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = onProfileClick
-                ) {
-                    Text("My Profile")
+                    Text("Logout", color = Color.White)
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Theme Switch
+            Button(
+                onClick = {
+                    onThemeChange(!isDarkTheme)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = if (isDarkTheme) {
+                        "☀ Switch to Light Mode"
+                    } else {
+                        "🌙 Switch to Dark Mode"
+                    },
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onProfileClick
+            ) {
+                Text("My Profile")
+            }
+
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "Your personal health dashboard",
                 fontSize = 15.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(28.dp))
 
+            // Today's Overview
             Text(
                 text = "Today's Overview",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFF8FAFC)
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -284,7 +285,6 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 HealthCard(
                     title = "Steps",
                     value = totalSteps.toString(),
@@ -312,10 +312,12 @@ class MainActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(28.dp))
 
             Button(
-                onClick = { showAddRecordForm = true },
+                onClick = {
+                    showAddRecordForm = true
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
@@ -325,23 +327,23 @@ class MainActivity : ComponentActivity() {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Daily Health Goals
             Text(
                 text = "Daily Health Goals",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GoalCard(
-                    title = "Walking Goal",
-                    description = "Target: 10,000 steps per day",
-                    current = totalSteps,
-                    target = 10000,
-                    progressColor = Color(0xFF16A085)
-                )
-
+                title = "Walking Goal",
+                description = "Target: 10,000 steps per day",
+                current = totalSteps,
+                target = 10000,
+                progressColor = Color(0xFF16A085)
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -352,7 +354,6 @@ class MainActivity : ComponentActivity() {
                 target = 2000,
                 progressColor = Color(0xFF2196F3)
             )
-
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -366,41 +367,43 @@ class MainActivity : ComponentActivity() {
 
             Spacer(modifier = Modifier.height(28.dp))
 
+            // Health Records History
             Text(
                 text = "Health Records History",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFF8FAFC)
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            var selectedDate by remember { mutableStateOf("") }
-
             OutlinedTextField(
                 value = selectedDate,
-                onValueChange = { selectedDate = it },
-                label = { Text("Search by date (YYYY-MM-DD)") },
-                placeholder = { Text("2026-11-21") },
+                onValueChange = {
+                    selectedDate = it
+                },
+                label = {
+                    Text("Search by date (YYYY-MM-DD)")
+                },
+                placeholder = {
+                    Text("2026-11-21")
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             if (records.isEmpty()) {
-
                 Text(
                     text = "No health records available.",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
-
             } else {
-
                 records.filter { record ->
-                    selectedDate.isBlank() || record.date == selectedDate.trim()
+                    selectedDate.isBlank() ||
+                            record.date == selectedDate.trim()
                 }.forEach { record ->
-
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -475,9 +478,78 @@ class MainActivity : ComponentActivity() {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // App Version
+            Text(
+                text = "HealthMate v1.0.0",
+                modifier = Modifier.fillMaxWidth(),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
+        // Add Health Record Dialog
         if (showAddRecordForm) {
+            AddHealthRecordDialog(
+                viewModel = viewModel,
+                onDismiss = {
+                    showAddRecordForm = false
+                }
+            )
+        }
+
+        // Delete Confirmation Dialog
+        if (recordToDelete != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    recordToDelete = null
+                },
+                title = {
+                    Text("Delete Health Record")
+                },
+                text = {
+                    Text("Are you sure you want to delete this health record?")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            recordToDelete?.let {
+                                viewModel.deleteRecord(it)
+                            }
+                            recordToDelete = null
+                        }
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            recordToDelete = null
+                        }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        // Edit Health Record Dialog
+        if (recordToEdit != null) {
+            EditHealthRecordDialog(
+                record = recordToEdit!!,
+                viewModel = viewModel,
+                onDismiss = {
+                    recordToEdit = null
+                }
+            )
+        }
+
+
+    if (showAddRecordForm) {
 
             AddHealthRecordDialog(
                 viewModel = viewModel,
@@ -751,6 +823,7 @@ class MainActivity : ComponentActivity() {
                             unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             cursorColor = MaterialTheme.colorScheme.primary
                         )
+
                     )
 
                     OutlinedTextField(
@@ -765,14 +838,14 @@ class MainActivity : ComponentActivity() {
                             keyboardType = KeyboardType.Number
                         ),
                         modifier = Modifier.fillMaxWidth(),
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF0D9488),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedLabelColor = Color(0xFF34D399),
-                            unfocusedLabelColor = Color(0xFF94A3B8),
-                            cursorColor = Color(0xFF34D399)
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
@@ -788,14 +861,14 @@ class MainActivity : ComponentActivity() {
                             keyboardType = KeyboardType.Number
                         ),
                         modifier = Modifier.fillMaxWidth(),
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF0D9488),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedLabelColor = Color(0xFF34D399),
-                            unfocusedLabelColor = Color(0xFF94A3B8),
-                            cursorColor = Color(0xFF34D399)
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     OutlinedTextField(
@@ -810,14 +883,14 @@ class MainActivity : ComponentActivity() {
                             keyboardType = KeyboardType.Number
                         ),
                         modifier = Modifier.fillMaxWidth(),
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF0D9488),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedLabelColor = Color(0xFF34D399),
-                            unfocusedLabelColor = Color(0xFF94A3B8),
-                            cursorColor = Color(0xFF34D399)
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     if (errorMessage.isNotBlank()) {
@@ -930,13 +1003,13 @@ class MainActivity : ComponentActivity() {
                         label = { Text("Date (YYYY-MM-DD)") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFF0D9488),
-                            unfocusedBorderColor = Color(0xFF475569),
-                            focusedLabelColor = Color(0xFF34D399),
-                            unfocusedLabelColor = Color(0xFF94A3B8),
-                            cursorColor = Color(0xFF34D399)
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         )
                     )
 

@@ -22,12 +22,15 @@ private val LightColorScheme = lightColorScheme(
     primary = Color(0xFF4B5F91),
     secondary = Color(0xFF0D9488),
     tertiary = Color(0xFF2196F3),
+
     background = Color(0xFFF5F7FA),
     surface = Color.White,
+
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onBackground = Color(0xFF1E293B),
-    onSurface = Color(0xFF1E293B)
+    onBackground = Color.Black,
+    onSurface = Color.Black
+
 )
 
 @Composable
