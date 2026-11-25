@@ -1,6 +1,8 @@
+
 package com.example.healthmate
 
 import android.content.Context
+import java.security.MessageDigest
 
 class AccountStorage(context: Context) {
 
@@ -9,17 +11,24 @@ class AccountStorage(context: Context) {
         Context.MODE_PRIVATE
     )
 
+    private fun hashPassword(password: String): String {
+        val bytes = MessageDigest.getInstance("SHA-256")
+            .digest(password.toByteArray())
+
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
     fun register(name: String, email: String, password: String): Boolean {
 
         val normalizedEmail = email.trim().lowercase()
 
-        if (preferences.contains(normalizedEmail)) {
+        if (accountExists(normalizedEmail)) {
             return false
         }
 
         preferences.edit()
             .putString("${normalizedEmail}_name", name)
-            .putString("${normalizedEmail}_password", password)
+            .putString("${normalizedEmail}_password", hashPassword(password))
             .apply()
 
         return true
@@ -34,7 +43,7 @@ class AccountStorage(context: Context) {
             null
         )
 
-        return savedPassword == password
+        return savedPassword == hashPassword(password)
     }
 
     fun accountExists(email: String): Boolean {
@@ -45,6 +54,7 @@ class AccountStorage(context: Context) {
     }
 
     fun getName(email: String): String {
+
         val normalizedEmail = email.trim().lowercase()
 
         return preferences.getString(

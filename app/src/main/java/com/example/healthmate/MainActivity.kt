@@ -40,17 +40,54 @@ import com.example.healthmate.ui.theme.HealthMateTheme
 import java.time.LocalDate
 import androidx.compose.material3.DatePicker
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.core.view.WindowCompat
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.SideEffect
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
+
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+
+
         val viewModel =
             ViewModelProvider(this)[HealthMateViewModel::class.java]
 
+        val themePrefs = getSharedPreferences(
+            "healthmate_settings",
+            MODE_PRIVATE
+        )
+
         setContent {
-            HealthMateTheme {
+            var isDarkTheme by remember {
+                mutableStateOf(
+                    themePrefs.getBoolean("dark_theme", false)
+                )
+            }
+
+            SideEffect {
+                window.statusBarColor = if (isDarkTheme) {
+                    android.graphics.Color.rgb(15, 23, 42)
+                } else {
+                    android.graphics.Color.rgb(245, 247, 250)
+                }
+
+                WindowCompat.getInsetsController(
+                    window,
+                    window.decorView
+                ).isAppearanceLightStatusBars = !isDarkTheme
+            }
+
+            HealthMateTheme(
+                darkTheme = isDarkTheme
+            ) {
 
                 var currentScreen by remember {
                     mutableStateOf("login")
@@ -59,7 +96,7 @@ class MainActivity : ComponentActivity() {
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFFF5F7FA)
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.background
                 ) {
 
                     when (currentScreen) {
@@ -91,6 +128,13 @@ class MainActivity : ComponentActivity() {
                             },
                             onProfileClick = {
                                 currentScreen = "profile"
+                            },
+                            isDarkTheme = isDarkTheme,
+                            onThemeChange = { dark ->
+                                isDarkTheme = dark
+                                themePrefs.edit()
+                                    .putBoolean("dark_theme", dark)
+                                    .apply()
                             }
                         )
 
@@ -111,8 +155,10 @@ class MainActivity : ComponentActivity() {
     fun HealthMateDashboard(
         viewModel: HealthMateViewModel,
         onLogout: () -> Unit,
-        onProfileClick: () -> Unit
-    ) {
+        onProfileClick: () -> Unit,
+        isDarkTheme: Boolean,
+        onThemeChange: (Boolean) -> Unit
+    ){
 
         val records by viewModel.records.collectAsState()
 
@@ -140,10 +186,12 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF5F7FA))
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
+
 
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -153,27 +201,64 @@ class MainActivity : ComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "HealthMate",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF176B5B)
-                    )
+                    Column {
+                        Text(
+                            text = "HealthMate",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF8FAFC)
+                        )
+
+                        Text(
+                            text = "Stay healthy, stay happy!",
+                            fontSize = 13.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+                    }
 
                     Button(
-                        onClick = {
-                            onLogout()
-                        }
+                        onClick = onLogout,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFDC2626)
+                        )
                     ) {
-                        Text("Logout")
+                        Text("Logout", color = Color.White)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Button(
                     onClick = {
-                        onProfileClick()
-                    }
+                        onThemeChange(!isDarkTheme)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isDarkTheme) {
+                            Color(0xFF334155)
+                        } else {
+                            Color(0xFF4B5F91)
+                        }
+                    )
                 ) {
-                    Text("Profile")
+                    Text(
+                        text = if (isDarkTheme) {
+                            "☀ Switch to Light Mode"
+                        } else {
+                            "🌙 Switch to Dark Mode"
+                        },
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = onProfileClick
+                ) {
+                    Text("My Profile")
                 }
             }
             Spacer(modifier = Modifier.height(6.dp))
@@ -190,7 +275,7 @@ class MainActivity : ComponentActivity() {
                 text = "Today's Overview",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222)
+                color = Color(0xFFF8FAFC)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -229,7 +314,11 @@ class MainActivity : ComponentActivity() {
             Button(
                 onClick = { showAddRecordForm = true },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text("Add Health Record")
             }
@@ -240,28 +329,39 @@ class MainActivity : ComponentActivity() {
                 text = "Daily Health Goals",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222)
+                color = Color.White
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GoalCard(
-                title = "Walking Goal",
-                description = "Target: 10,000 steps per day"
-            )
+                    title = "Walking Goal",
+                    description = "Target: 10,000 steps per day",
+                    current = totalSteps,
+                    target = 10000,
+                    progressColor = Color(0xFF16A085)
+                )
+
 
             Spacer(modifier = Modifier.height(12.dp))
 
             GoalCard(
                 title = "Water Goal",
-                description = "Target: 2,000 ml per day"
+                description = "Target: 2,000 ml per day",
+                current = totalWater,
+                target = 2000,
+                progressColor = Color(0xFF2196F3)
             )
+
 
             Spacer(modifier = Modifier.height(12.dp))
 
             GoalCard(
                 title = "Calorie Tracking",
-                description = "Monitor your daily activity"
+                description = "Daily activity calories",
+                current = totalCalories,
+                target = 500,
+                progressColor = Color(0xFFFF9800)
             )
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -270,7 +370,7 @@ class MainActivity : ComponentActivity() {
                 text = "Health Records History",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222)
+                color = Color(0xFFF8FAFC)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -298,42 +398,50 @@ class MainActivity : ComponentActivity() {
             } else {
 
                 records.filter { record ->
-                    selectedDate.isBlank() || record.date.contains(selectedDate)
+                    selectedDate.isBlank() || record.date == selectedDate.trim()
                 }.forEach { record ->
+
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         elevation = CardDefaults.cardElevation(
                             defaultElevation = 2.dp
                         )
                     ) {
-
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
-
                             Text(
                                 text = record.date,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF176B5B)
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            Text("Steps: ${record.steps}")
+                            Text(
+                                text = "Steps: ${record.steps}",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            Text("Calories: ${record.calories} kcal")
+                            Text(
+                                text = "Calories: ${record.calories} kcal",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            Text("Water: ${record.water} ml")
+                            Text(
+                                text = "Water: ${record.water} ml",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
 
                             Spacer(modifier = Modifier.height(12.dp))
 
@@ -341,7 +449,6 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-
                                 Button(
                                     onClick = {
                                         recordToEdit = record
@@ -428,6 +535,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+
+
+
     @Composable
     fun HealthCard(
         title: String,
@@ -436,74 +547,107 @@ class MainActivity : ComponentActivity() {
         modifier: Modifier = Modifier
     ) {
 
+
+        val accentColor = when (title) {
+            "Steps" -> Color(0xFF34D399)
+            "Calories" -> Color(0xFFFBBF24)
+            "Water Intake" -> Color(0xFF38BDF8)
+            else -> Color(0xFF34D399)
+        }
+
+        val icon = when (title) {
+            "Steps" -> "🚶"
+            "Calories" -> "🔥"
+            "Water Intake" -> "💧"
+            else -> "❤️"
+        }
+
         Card(
             modifier = modifier,
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface
             ),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 3.dp
+                defaultElevation = 4.dp
             )
         ) {
-
             Column(
-                modifier = Modifier.padding(18.dp)
+                modifier = Modifier.padding(20.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-                Text(
-                    text = title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray
-                )
+                    Text(
+                        text = icon,
+                        fontSize = 22.sp
+                    )
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = value,
-                    fontSize = 30.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF176B5B)
+                    color = accentColor
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = unit,
                     fontSize = 13.sp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 
+
+
+
     @Composable
     fun GoalCard(
         title: String,
-        description: String
+        description: String,
+        current: Int = 0,
+        target: Int = 0,
+        progressColor: Color = Color(0xFF34D399)
     ) {
+        val progress = if (target > 0) {
+            (current.toFloat() / target).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface
             ),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 2.dp
+                defaultElevation = 3.dp
             )
         ) {
-
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(18.dp)
             ) {
-
                 Text(
                     text = title,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF176B5B)
+                    color = progressColor
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -511,8 +655,39 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = description,
                     fontSize = 14.sp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                if (target > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "$current / $target",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Text(
+                            text = "${(progress * 100).toInt()}%",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = progressColor
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = progressColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
             }
         }
     }
@@ -546,6 +721,10 @@ class MainActivity : ComponentActivity() {
         AlertDialog(
             onDismissRequest = onDismiss,
 
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+
             title = {
                 Text("Add Health Record")
             },
@@ -562,7 +741,16 @@ class MainActivity : ComponentActivity() {
                         label = {
                             Text("Date (YYYY-MM-DD)")
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        )
                     )
 
                     OutlinedTextField(
@@ -576,7 +764,16 @@ class MainActivity : ComponentActivity() {
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
+                        )
                     )
 
                     OutlinedTextField(
@@ -590,9 +787,17 @@ class MainActivity : ComponentActivity() {
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
+                        )
                     )
-
                     OutlinedTextField(
                         value = water,
                         onValueChange = {
@@ -604,9 +809,17 @@ class MainActivity : ComponentActivity() {
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
+                        )
                     )
-
                     if (errorMessage.isNotBlank()) {
 
                         Spacer(
@@ -638,30 +851,20 @@ class MainActivity : ComponentActivity() {
                         }
 
                         if (!validDate) {
-
-                            errorMessage =
-                                "Please enter a valid date (YYYY-MM-DD)."
-
+                            errorMessage = "Please enter a valid date (YYYY-MM-DD)."
                         } else if (
                             stepValue == null ||
                             calorieValue == null ||
                             waterValue == null
                         ) {
-
-                            errorMessage =
-                                "Please enter valid numbers in all fields."
-
+                            errorMessage = "Please enter valid numbers in all fields."
                         } else if (
                             stepValue < 0 ||
                             calorieValue < 0 ||
                             waterValue < 0
                         ) {
-
-                            errorMessage =
-                                "Values cannot be negative."
-
+                            errorMessage = "Values cannot be negative."
                         } else {
-
                             viewModel.addRecord(
                                 HealthRecord(
                                     date = date,
@@ -670,24 +873,30 @@ class MainActivity : ComponentActivity() {
                                     water = waterValue
                                 )
                             )
-
                             onDismiss()
                         }
-                    }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0D9488)
+                    )
                 ) {
-                    Text("Save")
+                    Text("Save", color = Color.White)
                 }
             },
 
             dismissButton = {
                 Button(
-                    onClick = onDismiss
+                    onClick = onDismiss,
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF334155)
+                    )
                 ) {
-                    Text("Cancel")
+                    Text("Cancel", color = Color.White)
                 }
             }
         )
     }
+
 
     @Composable
     fun EditHealthRecordDialog(
@@ -703,13 +912,32 @@ class MainActivity : ComponentActivity() {
 
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Edit Health Record") },
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+            textContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+
+            title = {
+                Text("Edit Health Record")
+            },
+
             text = {
-                Column {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(
                         value = date,
                         onValueChange = { date = it },
-                        label = { Text("Date (YYYY-MM-DD)") }
+                        label = { Text("Date (YYYY-MM-DD)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
+                        )
                     )
 
                     OutlinedTextField(
@@ -718,6 +946,16 @@ class MainActivity : ComponentActivity() {
                         label = { Text("Steps") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
                         )
                     )
 
@@ -727,6 +965,16 @@ class MainActivity : ComponentActivity() {
                         label = { Text("Calories") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
                         )
                     )
 
@@ -736,17 +984,28 @@ class MainActivity : ComponentActivity() {
                         label = { Text("Water (ml)") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF0D9488),
+                            unfocusedBorderColor = Color(0xFF475569),
+                            focusedLabelColor = Color(0xFF34D399),
+                            unfocusedLabelColor = Color(0xFF94A3B8),
+                            cursorColor = Color(0xFF34D399)
                         )
                     )
 
                     if (errorMessage.isNotBlank()) {
                         Text(
                             text = errorMessage,
-                            color = Color.Red
+                            color = Color(0xFFF87171)
                         )
                     }
                 }
             },
+
             confirmButton = {
                 Button(
                     onClick = {
@@ -786,14 +1045,23 @@ class MainActivity : ComponentActivity() {
                             )
                             onDismiss()
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0D9488)
+                    )
                 ) {
-                    Text("Update")
+                    Text("Update", color = Color.White)
                 }
             },
+
             dismissButton = {
-                Button(onClick = onDismiss) {
-                    Text("Cancel")
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF334155)
+                    )
+                ) {
+                    Text("Cancel", color = Color.White)
                 }
             }
         )
