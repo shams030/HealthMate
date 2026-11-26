@@ -62,4 +62,19 @@ class AccountStorage(context: Context) {
             "HealthMate User"
         ) ?: "HealthMate User"
     }
+    fun saveLoginSession(email: String) {
+        preferences.edit()
+            .putString("logged_in_email", email.trim().lowercase())
+            .apply()
+    }
+
+    fun getLoggedInEmail(): String? {
+        return preferences.getString("logged_in_email", null)
+    }
+
+    fun clearLoginSession() {
+        preferences.edit()
+            .remove("logged_in_email")
+            .apply()
+    }
 }

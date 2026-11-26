@@ -90,10 +90,19 @@ class MainActivity : ComponentActivity() {
                 darkTheme = isDarkTheme
             ) {
 
-                var currentScreen by remember {
-                    mutableStateOf("login")
+                val accountStorage = remember {
+                    AccountStorage(this@MainActivity)
                 }
-                var loggedInEmail by remember { mutableStateOf("") }
+
+                var loggedInEmail by remember {
+                    mutableStateOf(accountStorage.getLoggedInEmail() ?: "")
+                }
+
+                var currentScreen by remember {
+                    mutableStateOf(
+                        if (loggedInEmail.isNotEmpty()) "dashboard" else "login"
+                    )
+                }
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -105,6 +114,7 @@ class MainActivity : ComponentActivity() {
                         "login" -> LoginScreen(
                             onLogin = { email ->
                                 loggedInEmail = email
+                                accountStorage.saveLoginSession(email)
                                 currentScreen = "dashboard"
                             },
 
@@ -125,8 +135,11 @@ class MainActivity : ComponentActivity() {
                         "dashboard" -> HealthMateDashboard(
                             viewModel = viewModel,
                             onLogout = {
+                                accountStorage.clearLoginSession()
+                                loggedInEmail = ""
                                 currentScreen = "login"
                             },
+
                             onProfileClick = {
                                 currentScreen = "profile"
                             },
